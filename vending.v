@@ -1,4 +1,4 @@
-module vending (clk, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, change, dispensed); 
+module vending (clk, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, dispensed, quart, dim, nick, pen); 
 						
 input clk;     					 // Declare input port for the clock to allow counter to count up  
 input [2:0] index;             // chosen drink  
@@ -6,10 +6,15 @@ input paymentMethod;
 input [8:0] creditBalance;
 input nickel, dime, quarter, dollar;
 input [20:0] cost;				// keeps track of cost of each item, index is the item you select
-output reg [8:0] change;
 input cancel;
-output reg dispensed;
 
+output reg dispensed;
+output wire [3:0] quart;
+output wire [2:0] dim;
+output wire [2:0] nick;
+output wire [2:0] pen;
+
+reg [8:0] change;
 reg [2:0] regcost [6:0];
 reg [8:0] creditBalanceReg;					
 reg [2:0] currentInventory [8:0]; // number of items left at that index
@@ -25,6 +30,8 @@ reg [8:0] currentBalance;
 // 00: Select the product
 // 01: Insert coins
 // 10: Dispensing
+
+dispenseChange change_back(change, quart, dim, nick, pen);
 
 initial begin
 	integer j;
