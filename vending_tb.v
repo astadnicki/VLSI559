@@ -8,7 +8,7 @@ reg clk;
 reg paymentMethod;
 reg [2:0] index;
 reg [20:0] cost;
-reg nickel, dime, quarter;
+reg nickel, dime, quarter, dollar;
 
 wire dispensed;
 wire [8:0] change;
@@ -17,7 +17,7 @@ wire [3:0] dispensedIndex;
 localparam CLK_PERIOD = 10;
 
 
-vending dut(clk, index, paymentMethod, creditBalance, nickel, dime, quarter, cost, change, cancel, dispensed, dispensedIndex);
+vending dut(clk, index, paymentMethod, creditBalance, nickel, dime, quarter, cost, change, cancel, dispensed);
 
 initial clk = 0;
 always #CLK_PERIOD clk = ~clk;
