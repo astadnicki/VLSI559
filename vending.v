@@ -9,7 +9,6 @@ input [20:0] cost;				// keeps track of cost of each item, index is the item you
 output reg [8:0] change;
 input cancel;
 output reg dispensed;
-output reg [2:0] dispensedIndex;    // outputs index dispensed
 
 reg [2:0] regcost [6:0];
 reg [8:0] creditBalanceReg;					
@@ -41,6 +40,7 @@ end
 always @ (posedge clk) begin  
 
 	currentBalance = currentBalance + money;	// account for coin inputs
+	dispensed = 0;
 	
 	if (cancel) begin
 		state = 2'b11;
@@ -102,7 +102,7 @@ always @ (posedge clk) begin
 		
 		2'b10 : begin
 			$display("Dispensing");
-			dispensedIndex = regindex;
+			dispensed = 1;
 			currentInventory[regindex] = currentInventory[regindex] - 1;
 			state = 2'b00;
 		end
