@@ -1,10 +1,10 @@
-module vending (clk, index, paymentMethod, creditBalance, nickel, dime, quarter, cost, cancel, change, dispensed, dispensedIndex); 
+module vending (clk, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, change, dispensed); 
 						
 input clk;     					 // Declare input port for the clock to allow counter to count up  
 input [2:0] index;             // chosen drink  
 input paymentMethod;
 input [8:0] creditBalance;
-input nickel, dime, quarter;
+input nickel, dime, quarter, dollar;
 input [20:0] cost;				// keeps track of cost of each item, index is the item you select
 output reg [8:0] change;
 input cancel;
@@ -40,7 +40,7 @@ end
 always @ (posedge clk) begin  
 
 	currentBalance = currentBalance + money;	// account for coin inputs
-	dispensed = 0;
+	dispensed = 1'b0;
 	
 	if (cancel) begin
 		state = 2'b11;
@@ -110,7 +110,7 @@ always @ (posedge clk) begin
 		2'b11 : begin
 			$display("Cancelled");
 			change = currentBalance; 	// add module to dispense change --> input = change, output = coins
-			currentBalance = 0;
+			currentBalance = 1'b0;
 			state = 2'b00;	// select product
 		end
 		
