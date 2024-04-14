@@ -5,7 +5,7 @@ input [2:0] index;             // chosen drink
 input paymentMethod;
 input [8:0] creditBalance;
 input nickel, dime, quarter, dollar;
-input [20:0] cost;				// keeps track of cost of each item, index is the item you select
+input [63:0] cost;				// keeps track of cost of each item, index is the item you select
 input cancel;
 
 output reg dispensed;
@@ -14,10 +14,12 @@ output wire [2:0] dim;
 output wire [2:0] nick;
 output wire [2:0] pen;
 
+localparam num_items = 8;
+
 reg [8:0] change;
-reg [2:0] regcost [6:0];
+reg [7:0] regcost [num_items-1:0];
 reg [8:0] creditBalanceReg;					
-reg [2:0] currentInventory [8:0]; // number of items left at that index
+reg [2:0] currentInventory [num_items-1:0]; // number of items left at that index
 reg [8:0] money;	// where the actual dollar amount is money/100. Ex: if money is 256, then we have $2.56
 reg [1:0] state;	// keeps track of the current state the state machine is in
 reg [2:0] regindex;
@@ -33,20 +35,28 @@ reg [8:0] currentBalance;
 
 dispenseChange change_back(change, quart, dim, nick, pen);
 
+integer counter;	// account for timeout
+integer j;
+
 initial begin
-	integer j;
-	// Load cost of each product into memory
-	for (j=0; j<=6; j=j+1) begin
-		regcost[j] = cost[j*3+:3];
+	
+	counter = 0;
+	
+	// Load cost and inventory total of each product into memory
+	for (j=0; j<=num_items-1; j=j+1) begin
+		regcost[j] = cost[j*3+:3];	
+		currentInventory[j] = 3'b111;
+		
 	end
 	
 	state = 2'b00;	// set initial state
 	
+	
 end
   
 always @ (posedge clk) begin  
-
 	currentBalance = currentBalance + money;	// account for coin inputs
+	counter = counter + 1;
 	dispensed = 1'b0;
 	
 	if (cancel) begin
@@ -60,7 +70,7 @@ always @ (posedge clk) begin
 				if (currentInventory[regindex] != 0) begin
 					state = 2'b01;
 				end else begin
-					$display("Out of stock");
+					$display("Out of stock: Please select another item");
 					state = 2'b00;
 				end
 			end
@@ -70,23 +80,31 @@ always @ (posedge clk) begin
 		
 			case (paymentMethod)	// wait for payment method input
 			
-				1'b0 : begin // cash payment
+				1'b0 : begin // cash/coin payment
 		
-					$display("Paying with cash");
+					$display("Paying with cash --> Current balance: %d", money);
 					
-					if (currentBalance == regcost[regindex]) begin
-						$display("Sufficient funds");
-						state = 2'b10;	// dispense product
-					end else if (currentBalance > regcost[regindex]) begin
-					// ADD IN MODULO CHANGE CALCULATION FOR NICKELS, DIMES, AND QUARTERS
-						$display("Sufficient funds");
-						currentBalance = currentBalance - regcost[regindex];
-						state = 2'b10; // dispense product 												
-					end else if (currentBalance < regcost[regindex]) begin
-						$display("Insufficient funds");
-						state = 2'b01;
+					if (counter <= 1000000) begin		// FIX timeout
+						if (currentBalance == regcost[regindex]) begin
+							$display("Sufficient funds");
+							state = 2'b10;	// dispense product
+							counter = 0;
+						end else if (currentBalance > regcost[regindex]) begin
+						// ADD IN MODULO CHANGE CALCULATION FOR NICKELS, DIMES, AND QUARTERS
+							$display("Sufficient funds");
+							currentBalance = currentBalance - regcost[regindex];
+							state = 2'b10; // dispense product 		
+							counter = 0;
+						end else if (currentBalance < regcost[regindex]) begin
+							$display("Insufficient funds");
+							state = 2'b01;
+						end
+						
+					end else begin
+						$display("Timeout limit reached");
+						state = 2'b11;
 					end
-			
+				
 				end
 			
 				1'b1 : begin // credit card payment
@@ -109,7 +127,7 @@ always @ (posedge clk) begin
 		
 		2'b10 : begin
 			$display("Dispensing");
-			dispensed = 1;
+			dispensed = 1'b1;
 			currentInventory[regindex] = currentInventory[regindex] - 1;
 			state = 2'b00;
 		end
