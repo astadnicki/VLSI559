@@ -1,10 +1,15 @@
-module scan_ff(clk, se, si, d, q);
+module scan_ff #(parameter N = 1)(clk, se, si, d, q);
 
 input clk;
-input wire si;
-input wire se;
-input wire d;
-output reg q;
+input se;
+input [N:0] si;
+input [N:0] d;
+output reg [N:0] q;
+
+initial begin
+	// Initialization
+	q = 0;
+end
 
 always @(posedge clk) begin
 	case (se) 
