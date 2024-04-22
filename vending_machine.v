@@ -1,4 +1,4 @@
-module vending_machine (clk, clk2, se, si, rst, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, currentInventory, quarter_o, dime_o, nickel_o, gclk); 
+module vending_machine (clk, clk2, se, si, rst, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, currentInventory, quarter_o, dime_o, nickel_o); 
 
 
 //***** INPUTS AND OUTPUTS *****//
@@ -24,7 +24,8 @@ output wire [4:0] quarter_o;						// Change back (quarters)
 output wire [4:0] dime_o;							// Change back (dimes)
 output wire [4:0] nickel_o;						// Change back (nickels)
 
-output wire gclk;										// Gated clocks
+wire gclk;												// Gated clocks
+wire gclk2;
 
 localparam num_items = 8;							// Number of items in vending machine
 
@@ -123,7 +124,6 @@ always @ (posedge clk2) begin
 		si3 <= si[13:12];
 		si4 <= si[37:14];
 		si5 <= si[101:38];
-		
 	end
 	
 	//Increment counter every clock edge

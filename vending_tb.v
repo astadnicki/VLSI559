@@ -6,7 +6,6 @@ module vending_machine_tb();
 
 reg clk;
 reg clk2;
-wire gclk;
 
 reg rst;
 reg paymentMethod;
@@ -29,7 +28,7 @@ wire [4:0] nick;
 localparam CLK_PERIOD = 1000;	// 1 MHz
 
 
-vending_machine dut(clk, clk2, se, si, rst, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, currentInventory, quart, dim, nick, gclk);
+vending_machine dut(clk, clk2, se, si, rst, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, currentInventory, quart, dim, nick);
 					 
 initial clk = 0;
 always #CLK_PERIOD clk = ~clk;
