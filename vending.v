@@ -1,3 +1,11 @@
+
+// OLD FILE --> DO NOT USE
+
+
+
+
+
+
 module vending (clk, rst, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, dispensed, quarter_o, dime_o, nickel_o, penny_o); 
 						
 input clk;
