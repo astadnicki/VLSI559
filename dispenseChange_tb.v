@@ -16,13 +16,7 @@ wire [2:0] nickels;
 wire [2:0] pennies;
 
 // Instantiate the Unit Under Test (UUT)
-dispenseChange dut(
-    .change(change),
-    .quarters(quarters),
-    .dimes(dimes),
-    .nickels(nickels),
-	 .pennies(pennies)
-);
+dispenseChange dut(change, quarters, dimes, nickels, pennies);
 
 // Clock generation
 always #((CLK_PERIOD)/2) clk = ~clk;

@@ -1,55 +1,56 @@
-module vending_machine (clk, clk2, rst, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, currentInventory, quarter_o, dime_o, nickel_o, gclk); 
+module vending_machine (clk, clk2, se, si, rst, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, currentInventory, quarter_o, dime_o, nickel_o, gclk); 
 
 
 //***** INPUTS AND OUTPUTS *****//
 
 // Clock signals
-input clk;
-input clk2;
+input clk;												// 500 KHz clock
+input clk2;												// 1 MHz
 
-input rst;												//reset     					
-input [3:0] index;									//drink selection
-input paymentMethod;									//payment selection
-input [8:0] creditBalance;							//credit card balance from company (input)
-input nickel, dime, quarter, dollar;			// coin inputs in machine
-input [63:0] cost;									// large register for cost of each item
-input cancel;											// user input to cancel selection
-input [23:0] currentInventory;
+input [4:0] se;										// Select enable for scan ff
+input [101:0] si;										// Scan input for ff
+	
+input rst;												// Reset     					
+input [3:0] index;									// Drink selection
+input paymentMethod;									// Payment selection
+input [8:0] creditBalance;							// Credit card balance from company (input)
+input nickel, dime, quarter, dollar;			// Coin inputs in machine
+input [63:0] cost;									// Large register for cost of each item
+input cancel;											// User input to cancel selection
+input [23:0] currentInventory;					
 										
 
-output wire [4:0] quarter_o;
-output wire [4:0] dime_o;
-output wire [4:0] nickel_o;
-output wire gclk;
+output wire [4:0] quarter_o;						// Change back (quarters)
+output wire [4:0] dime_o;							// Change back (dimes)
+output wire [4:0] nickel_o;						// Change back (nickels)
 
-localparam num_items = 8;
+output wire gclk;										// Gated clocks
 
-wire [8:0] change;									// Change back when selection or process is cancelled
-wire [8:0] credBalance;							   // Adjust credit balance
-wire [23:0] curInventory;
+localparam num_items = 8;							// Number of items in vending machine
 
-wire [3:0] curIndex;									// current index selection		
-wire [8:0] currentBalance;							
+wire [8:0] change;									// Change back when process is cancelled by user
+wire [8:0] credBalance;							   // Credit balance ouput wire for scan functionality
+wire [23:0] curInventory;							// Product inventory list (3 bits for each item)
 
-reg [31:0] counter;									// account for timeout functionality
-reg clkEnable;
+wire [3:0] curIndex;									// Current index selection	(output from scan)	
 
-reg se=0;												// CREATE LARGE REGISTER TO STORE ALL ACCUMULATED VALUES
-reg [3:0] si=4'b0;
-reg [8:0] si1=8'b0;
-reg [1:0] si2=2'b0;
-reg [23:0] si3=24'b0;
-reg [63:0] si4=64'b0;
+reg [31:0] counter;									// Account for timeout functionality
+reg clkEnable;											// CLK enable for clock gating
+												
+reg [3:0] si1=4'b0;
+reg [8:0] si2=8'b0;
+reg [1:0] si3=2'b0;
+reg [23:0] si4=24'b0;
+reg [63:0] si5=64'b0;
 
 wire [63:0] storeCost;
 
-wire [1:0] state;										// current state
-wire [1:0] nextState;									
+wire [1:0] state;										// Current state
+wire [1:0] nextState;								// Next state					
 wire [8:0] newBalance;								// Adjusted balance for addMoney module
 wire [8:0] newCredit;								// Adjusted balance for addMoney module
 
-wire reduceBalance;									// Adjust current balance
-wire dispensed;
+wire reduceBalance;									// Adjust current balance in addMoney module
 
 wire cancelled;
 
@@ -59,6 +60,7 @@ wire reduceInventory;
 wire reduceInventoryDone;
 
 wire cancelledDone;
+wire changeStateDone;
 
 //***** MODULES *****//
 
@@ -66,28 +68,29 @@ wire cancelledDone;
 dispenseChange change_back(change, quarter_o, dime_o, nickel_o);
 
 // Store selected index
-scan_ff #(3) itemSelection(gclk, se, si, index, curIndex);
+scan_ff #(3) itemSelection(gclk2, se[0], si1, index, curIndex);	// get rid of clock gating to fix not clocking the index;
 
 // Store State
-scan_ff stateAdjust(clk2, se, si2, nextState, state);
+scan_ff stateAdjust(clk2, se[2], si3, nextState, state);
 
 // Clock gating
-clockGate gclkCreate(clk2, clkEnable, gclk); 
+clockGate gclkCreate(clk2, clkEnable, gclk2); 
+clockGate gclk2Create(clk, clkEnable, gclk);
 
 // State machine
-stateMachine stateMachine(clk2, state, cancel, fullInventory, timeOut, cancelledDone, nextState, dispensed, cancelled);
+stateMachine stateMachine(clk2, state, index, cancel, fullInventory, timeOut, cancelledDone, changeState, nextState, cancelled, changeStateDone);
 
 // Store cost
-scan_ff #(63) updateCost(clk, se, si4, cost, storeCost);		// lower frequency clock to save power
+scan_ff #(63) updateCost(clk2, se[4], si5, cost, storeCost);		// lower frequency clock to save power but must align with edges
 
 // Coin and credit adjustments
-addMoney adjustBalance(clk2, rst, state, cancelled, paymentMethod, storeCost, curIndex, credBalance, dollar, quarter, dime, nickel, reduceInventoryDone, reduceInventory, change, cancelledDone);
+addMoney adjustBalance(clk2, rst, state, cancelled, paymentMethod, storeCost, curIndex, credBalance, dollar, quarter, dime, nickel, reduceInventoryDone, changeStateDone, reduceInventory, change, cancelledDone, changeState);
 
 // Store credit balance 
-scan_ff #(8) credAdjust(clk2, se, si1, creditBalance, credBalance);	// add clock gating for both this and current inventory
+scan_ff #(8) credAdjust(clk2, se[1], si2, creditBalance, credBalance);
 
 // Store current inventory
-scan_ff #(23) InventoryAdjust(clk2, se, si3, currentInventory, curInventory);
+scan_ff #(23) InventoryAdjust(clk2, se[3], si4, currentInventory, curInventory);
 
 // Monitor Inventory
 monitorInventory adjustInventory(clk2, rst, state, curInventory, curIndex, reduceInventory, reduceInventoryDone, fullInventory);
@@ -115,19 +118,21 @@ always @ (posedge clk2) begin
 		$display("Resetting");
 		// Initialize registers
 		counter <= 32'b0;
+		si1 <= si[3:0];
+		si2 <= si[11:4];
+		si3 <= si[13:12];
+		si4 <= si[37:14];
+		si5 <= si[101:38];
+		
 	end
 	
 	//Increment counter every clock edge
-	if (state == 2'b01) begin
-		counter <= counter + 1;
-	end else begin
-		counter <= 32'b0;
-	end
+	counter <= counter + 1;
 	
 	$display("state: %d, counter: %d, curIndex: %d", state, counter, curIndex);
 	
 	// Time out functionality
-	if (counter <= 20) begin		// 32'd1500000000 --> 30 seconds
+	if (counter <= 40) begin		// 32'd1500000000 --> 30 seconds
 		timeOut <= 0;
 	end else begin
 		timeOut <= 1;

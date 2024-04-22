@@ -17,6 +17,9 @@ reg nickel, dime, quarter, dollar;
 reg cancel;
 reg [8:0] creditBalance;
 
+reg [4:0] se;
+reg [101:0] si;
+
 wire dispensed;
 wire [8:0] change;
 wire [4:0] quart;
@@ -26,7 +29,7 @@ wire [4:0] nick;
 localparam CLK_PERIOD = 1000;	// 1 MHz
 
 
-vending_machine dut(clk, clk2, rst, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, currentInventory, quart, dim, nick, gclk);
+vending_machine dut(clk, clk2, se, si, rst, index, paymentMethod, creditBalance, nickel, dime, quarter, dollar, cost, cancel, currentInventory, quart, dim, nick, gclk);
 					 
 initial clk = 0;
 always #CLK_PERIOD clk = ~clk;
@@ -37,6 +40,9 @@ always #(CLK_PERIOD/2) clk2 = ~clk2;
 
 integer i;
 initial begin
+
+	si = 0;
+	se = 0;
 
 	cost = {8'd100, 8'd100, 8'd100, 8'd100, 8'd100, 8'd100, 8'd100, 8'd100};
 	currentInventory = {3'd4,3'd4,3'd4,3'd4,3'd4,3'd4,3'd4,3'd4};
@@ -66,22 +72,28 @@ initial begin
 		//if (i== 1) cancel = 1;
 	end
 	
-	cancel = 0;
+	#(2*CLK_PERIOD);
 	
-//	// Insert coins
-//	for (i=0; i<=3; i=i+1) begin	// insert 4 nickels and 4 dollars
-//		quarter=1;
-//		$display("Money entered");
-//		#(CLK_PERIOD);
-//		quarter = 0;
-//		#(CLK_PERIOD);
-//	end
-	
-	
+	paymentMethod = 0;
 	index = 1;
 	
+	#(4*CLK_PERIOD);
+	
+	index = 3;
+	
+	//cancel = 1;
+	
+	#(20*CLK_PERIOD);
+	
+	for (i=0; i<=3; i=i+1) begin	// insert 4 nickels and 4 dollars
+		nickel=1;
+		dollar=1;
+		$display("Money entered");
+		#(CLK_PERIOD);
+		nickel=0;
+		dollar=0;
+		#(CLK_PERIOD);
+	end
 end
-
-// Increment count
 
 endmodule 
