@@ -105,32 +105,32 @@ always @(state, rst, enoughMoney, cancelled, cancelledDone, reduceInventory, nic
 	if (quarter_o) newBalance = newBalance + 5'b11001;		// add 25 to money
 	if (dollar_o) newBalance = newBalance + 7'b1100100; 	// add 100 to money
 	
-		if (state != 2'b11) begin
-			if ((~reduceInventory && ~reduceInventoryDone) && (~cancelled && ~cancelledDone)) begin	// Not in the middle of dispensing or cancelling a product
-				if (~paymentMethod) begin		// cash payment
-					if (enoughMoney) begin
-						newBalance = newBalance - itemCost[curIndex*8+:8];
-						reduceInventoryFlag = 1;
-						$display("Product purchased with cash --> newBalance = %d", newBalance);
-					end
-				end else begin						//  credit card payment
-					if (enoughMoney) begin
-						newCredit = newCredit - itemCost[curIndex*8+:8];
-						reduceInventoryFlag = 1;
-						$display("Product purchased with credit --> newCredit = %d", newCredit);
-					end	
+	if (state != 2'b11) begin
+		if ((~reduceInventory && ~reduceInventoryDone) && (~cancelled && ~cancelledDone)) begin	// Not in the middle of dispensing or cancelling a product
+			if (~paymentMethod) begin		// cash payment
+				if (enoughMoney) begin
+					newBalance = newBalance - itemCost[curIndex*8+:8];
+					reduceInventoryFlag = 1;
+					$display("Product purchased with cash --> newBalance = %d", newBalance);
 				end
-				
-				if (~changeState && ~changeStateDone) begin
-					changeState <= 1;
-				end
-				
+			end else begin						//  credit card payment
+				if (enoughMoney) begin
+					newCredit = newCredit - itemCost[curIndex*8+:8];
+					reduceInventoryFlag = 1;
+					$display("Product purchased with credit --> newCredit = %d", newCredit);
+				end	
 			end
+			
+			if (~changeState && ~changeStateDone) begin
+				changeState <= 1;
+			end
+			
 		end
-		
-		if (changeState && changeStateDone) begin
-			changeState <= 0;
-		end
+	end
+	
+	if (changeState && changeStateDone) begin
+		changeState <= 0;
+	end
 	
 	
 	if (reduceInventoryFlag) begin

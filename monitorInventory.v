@@ -17,7 +17,6 @@ initial begin
 	fullInventory = 0;
 	newInventory = 0;
 	reduceInventoryDone = 0;
-	
 end
 
 // Sequential Logic
