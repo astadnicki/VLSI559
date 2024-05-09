@@ -1,4 +1,4 @@
-module addMoney(clk, rst, state, cancelled, paymentMethod, storeCost, curIndex, credBalance, dollar, quarter, dime, nickel, reduceInventoryDone, changeStateDone, reduceInventory, change, cancelledDone, changeState);
+module addMoney(clk, rst, state, cancelled, paymentMethod, storeCost, curIndex, credBalance, dollar, quarter, dime, nickel, reduceInventoryDone, changeStateDone, fullInventory, reduceInventory, change, cancelledDone, changeState);
 
 input clk;
 input rst;
@@ -12,6 +12,7 @@ input dollar, quarter, dime, nickel;
 input reduceInventoryDone;
 
 input changeStateDone;
+input fullInventory;
 
 output reg reduceInventory;
 output reg [8:0] change;
@@ -72,7 +73,7 @@ always @(posedge clk) begin
 	if (dollar) dollar_o <= 1; 	// dollar detected
 	else dollar_o <= 0;
 	
-	if ((state == 2'b01) && (~cancelled && ~cancelledDone)) begin		// In state 1 and not in middle of cancelling a product
+	if ((state != 2'b11) && (~cancelled && ~cancelledDone)) begin		// In state 1 and not in middle of cancelling a product
 		if (~paymentMethod) begin		// cash payment
 			if (newBalance >= itemCost[curIndex*8+:8]) begin
 				enoughMoney <= 1;
@@ -105,7 +106,7 @@ always @(state, rst, enoughMoney, cancelled, cancelledDone, reduceInventory, nic
 	if (quarter_o) newBalance = newBalance + 5'b11001;		// add 25 to money
 	if (dollar_o) newBalance = newBalance + 7'b1100100; 	// add 100 to money
 	
-	if (state != 2'b11) begin
+	if (fullInventory) begin
 		if ((~reduceInventory && ~reduceInventoryDone) && (~cancelled && ~cancelledDone)) begin	// Not in the middle of dispensing or cancelling a product
 			if (~paymentMethod) begin		// cash payment
 				if (enoughMoney) begin

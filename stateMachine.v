@@ -1,11 +1,10 @@
-module stateMachine(clk, state, index, cancel, fullInventory, timeOut, cancelledDone, changeState, nextState, cancelled, changeStateDone);
+module stateMachine(clk, state, index, cancel, fullInventory, cancelledDone, changeState, nextState, cancelled, changeStateDone);
 
 input clk;
 input [1:0] state;
 input [3:0] index;
 input cancel;
 input fullInventory;
-input timeOut;
 input cancelledDone;
 
 input changeState;
@@ -15,26 +14,32 @@ output reg cancelled;
 
 output reg changeStateDone;
 
+reg [31:0] counter;
+
 initial begin
 	//Initial state
 	nextState = 2'b0;
 	cancelled = 0;
 	changeStateDone = 0;
+	counter = 0;
 end
 
 
 // Sequential Logic
 always @(posedge clk) begin
-	
-	if (fullInventory) begin
+
+	$display("counter: %d, state: %d", counter, nextState);
+	counter <= counter + 1;
+
+	// Time out functionality
+	if (counter > 40) begin
+		nextState <= 2'b11;
+		counter <= 0;
+	end else if (fullInventory) begin
 		nextState <= 2'b01;
-	end else begin
+	end else if (~fullInventory) begin
 		$display("Out of stock: Please select another item");
 		nextState <= 2'b00;
-	end
-	
-	if (timeOut || cancel) begin
-		nextState <= 2'b11;
 	end
 	
 	// Initialize to state 00 after dispensing product (look for index again)

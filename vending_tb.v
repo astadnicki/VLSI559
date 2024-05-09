@@ -87,12 +87,15 @@ initial begin
 	#(CLK_PERIOD);
 	dollar=0;
 	
+	
 	#(4*CLK_PERIOD);
 	
-	cancel = 1;
+	index = 5;
+	
+	//cancel = 1;
 	
 	#(20*CLK_PERIOD);
 	
-	cancel = 1;	
+	
 end
 endmodule 
