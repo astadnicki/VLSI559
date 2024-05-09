@@ -16,8 +16,8 @@ reg nickel, dime, quarter, dollar;
 reg cancel;
 reg [8:0] creditBalance;
 
-reg [4:0] se;
-reg [101:0] si;
+reg [1:0] se;
+reg [5:0] si;
 
 wire dispensed;
 wire [8:0] change;
@@ -25,9 +25,6 @@ wire [4:0] quart;
 wire [4:0] dim;
 wire [4:0] nick;
 
-// Scan ff initialization for state adjustment
-//	si[13:12] = 2'b11;
-//	se[2] = 1;
 
 localparam CLK_PERIOD = 1000;	// 1 MHz
 
@@ -82,13 +79,24 @@ initial begin
 	index = 3;
 	#(2*CLK_PERIOD);
 	
+	cancel = 1;
+	$display("CANCELLED");
+	#(CLK_PERIOD);
+	cancel = 0;
+	#(CLK_PERIOD);
+	
 	dollar=1;
 	$display("Money entered");
 	#(CLK_PERIOD);
 	dollar=0;
 	
 	
-	#(4*CLK_PERIOD);
+	#(6*CLK_PERIOD);
+	
+	dollar=1;
+	$display("Money entered");
+	#(CLK_PERIOD);
+	dollar=0;
 	
 	index = 5;
 	

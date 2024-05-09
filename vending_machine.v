@@ -7,8 +7,8 @@ module vending_machine (clk, clk2, se, si, rst, index, paymentMethod, creditBala
 input clk;												// 500 KHz clock
 input clk2;												// 1 MHz
 
-input [4:0] se;										// Select enable for scan ff
-input [101:0] si;										// Scan input for ff
+input [1:0] se;										// Select enable for scan ff
+input [5:0] si;										// Scan input for ff
 	
 input rst;												// Reset     					
 input [3:0] index;									// Drink selection
@@ -30,21 +30,14 @@ wire gclk2;
 localparam num_items = 8;							// Number of items in vending machine
 
 wire [8:0] change;									// Change back when process is cancelled by user
-wire [8:0] credBalance;							   // Credit balance ouput wire for scan functionality
-wire [23:0] curInventory;							// Product inventory list (3 bits for each item)
 
 wire [3:0] curIndex;									// Current index selection	(output from scan)	
 
-reg [31:0] counter;									// Account for timeout functionality
 reg clkEnable;											// CLK enable for clock gating
 												
 reg [3:0] si1=4'b0;
-reg [8:0] si2=8'b0;
-reg [1:0] si3=2'b0;
-reg [23:0] si4=24'b0;
-reg [63:0] si5=64'b0;
+reg [1:0] si2=2'b0;
 
-wire [63:0] storeCost;
 
 wire [1:0] state;										// Current state
 wire [1:0] nextState;								// Next state					
@@ -65,44 +58,26 @@ wire changeStateDone;
 //***** MODULES *****//
 
 // Dispense change when selection cancelled
-dispenseChange change_back(change, quarter_o, dime_o, nickel_o);
+dispenseChange change_back(change, rst, quarter_o, dime_o, nickel_o);
 
 // Store selected index
 scan_ff #(3) itemSelection(gclk2, rst, se[0], si1, index, curIndex);	// get rid of clock gating to fix not clocking the index;
 
 // Store State
-scan_ff stateAdjust(clk2, rst, se[2], si3, nextState, state);
+scan_ff stateAdjust(clk2, rst, se[1], si2, nextState, state);
 
 // Clock gating
 clockGate gclkCreate(clk2, clkEnable, gclk2); 
 clockGate gclk2Create(clk, clkEnable, gclk);
 
 // State machine
-stateMachine stateMachine(clk2, state, index, cancel, fullInventory, cancelledDone, changeState, nextState, cancelled, changeStateDone);
-
-// Store cost
-scan_ff #(63) updateCost(clk2, rst, se[4], si5, cost, storeCost);		// lower frequency clock to save power but must align with edges
+stateMachine stateMachine(clk2, rst, state, index, cancel, fullInventory, cancelledDone, changeState, nextState, cancelled, changeStateDone);
 
 // Coin and credit adjustments
-addMoney adjustBalance(clk2, rst, state, cancelled, paymentMethod, storeCost, curIndex, credBalance, dollar, quarter, dime, nickel, reduceInventoryDone, changeStateDone, fullInventory, reduceInventory, change, cancelledDone, changeState);
-
-// Store credit balance 
-scan_ff #(8) credAdjust(clk2, rst, se[1], si2, creditBalance, credBalance);
-
-// Store current inventory
-scan_ff #(23) InventoryAdjust(clk2, rst, se[3], si4, currentInventory, curInventory);
+addMoney adjustBalance(clk2, rst, state, cancelled, paymentMethod, cost, curIndex, creditBalance, dollar, quarter, dime, nickel, reduceInventoryDone, changeStateDone, fullInventory, reduceInventory, change, cancelledDone, changeState);
 
 // Monitor Inventory
-monitorInventory adjustInventory(clk2, rst, state, curInventory, curIndex, reduceInventory, reduceInventoryDone, fullInventory);
-
-
-//***** INITIALIZATION *****//
-
-initial begin
-
-	
-		
-end
+monitorInventory adjustInventory(clk2, rst, state, currentInventory, curIndex, reduceInventory, reduceInventoryDone, fullInventory);
 
 
 //****** SEQUENTIAL LOGIC *****//
@@ -112,15 +87,8 @@ always @ (posedge clk2) begin
 	if (rst) begin
 		$display("Resetting");
 		// Initialize registers
-		counter <= 32'b0;
 		si1 <= si[3:0];
-		si2 <= si[11:4];
-		si3 <= si[13:12];
-		si4 <= si[37:14];
-		si5 <= si[101:38];
-		
-		// Initialize counter
-		counter <= 32'b0;	// keep track of timeout clock
+		si2 <= si[5:4];
 
 		// Initialize
 		clkEnable <= 0;
