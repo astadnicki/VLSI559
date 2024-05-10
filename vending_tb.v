@@ -20,10 +20,10 @@ reg [1:0] se;
 reg [5:0] si;
 
 wire dispensed;
-wire [8:0] change;
-wire [4:0] quart;
-wire [4:0] dim;
-wire [4:0] nick;
+wire [31:0] change;
+wire [8:0] quart;
+wire [8:0] dim;
+wire [8:0] nick;
 
 
 localparam CLK_PERIOD = 1000;	// 1 MHz
@@ -79,11 +79,11 @@ initial begin
 	index = 3;
 	#(2*CLK_PERIOD);
 	
-	cancel = 1;
-	$display("CANCELLED");
-	#(CLK_PERIOD);
-	cancel = 0;
-	#(CLK_PERIOD);
+//	cancel = 1;
+//	$display("CANCELLED");
+//	#(CLK_PERIOD);
+//	cancel = 0;
+//	#(CLK_PERIOD);
 	
 	dollar=1;
 	$display("Money entered");

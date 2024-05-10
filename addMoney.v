@@ -15,13 +15,13 @@ input changeStateDone;
 input fullInventory;
 
 output reg reduceInventory;
-output reg [8:0] change;
+output reg [31:0] change;
 output reg cancelledDone;
 
 output reg changeState;
 
-reg [8:0] newBalance;
-reg [8:0] newCredit;
+reg [10:0] newBalance;
+reg [10:0] newCredit;
 reg enoughMoney;
 
 localparam num_items = 8;
@@ -33,34 +33,17 @@ reg reduceInventoryFlag;
 
 reg [3:0] prevIndex;		
 
-// Sequential Logic
+// Non - Blocking
 always @(posedge clk) begin
 
 	if (rst) begin
 		// Store item cost into register from scan flip flop
 		itemCost <= storeCost;
-		nickel_o <= 0;
-		quarter_o <= 0;
-		dime_o <= 0;
-		dollar_o <= 0;
 		enoughMoney = 0;
 	end else begin
-	
-		// Money detection
-		if (nickel)  nickel_o <= 1; 	// nickel detected 
-		else nickel_o <= 0;
-		
-		if (dime) dime_o <= 1;  		// dime detected
-		else dime_o <= 0;
-		
-		if (quarter) quarter_o <= 1;	// quarter detected
-		else quarter_o <= 0;
-		
-		if (dollar) dollar_o <= 1; 	// dollar detected
-		else dollar_o <= 0;
 		
 		// Check money to see if there is enough to buy product
-		if ((state != 2'b11) && (~cancelled && ~cancelledDone)) begin		// Not in state 3 and not in middle of cancelling a product
+		if ((state == 2'b01) && (~cancelled && ~cancelledDone)) begin		// Not in state 3 and not in middle of cancelling a product
 			if (~paymentMethod) begin		// cash payment
 				if (newBalance >= itemCost[curIndex*8+:8]) begin
 					enoughMoney <= 1;
@@ -79,9 +62,9 @@ always @(posedge clk) begin
 	end
 		
 end
-	
-// Combinational logic	
-always @(state, rst, enoughMoney, cancelled, cancelledDone, reduceInventory, nickel_o, dime_o, quarter_o, dollar_o, cancelled, cancelledDone) begin	//state, rst, enoughMoney, cancelled, cancelledDone, reduceInventory, nickel_o, dime_o, quarter_o, dollar_o
+
+// Blocking
+always @(posedge clk) begin	//state, rst, enoughMoney, cancelled, cancelledDone, reduceInventory, nickel_o, dime_o, quarter_o, dollar_o
 
 	if (rst) begin
 		// Store credit from company
@@ -92,15 +75,15 @@ always @(state, rst, enoughMoney, cancelled, cancelledDone, reduceInventory, nic
 		cancelledDone = 0;
 		changeState = 0;
 	end else begin
-	
+		
 		// Coin balance adjust
-		if (nickel_o)  newBalance = newBalance + 3'b101; 		// add 5 to money 
-		if (dime_o) newBalance = newBalance + 4'b1010;  		// add 10 to money
-		if (quarter_o) newBalance = newBalance + 5'b11001;		// add 25 to money
-		if (dollar_o) newBalance = newBalance + 7'b1100100; 	// add 100 to money
+		if (nickel)  newBalance = newBalance + 3'b101; 		// add 5 to money 
+		if (dime) newBalance = newBalance + 4'b1010;  		// add 10 to money
+		if (quarter) newBalance = newBalance + 5'b11001;		// add 25 to money
+		if (dollar) newBalance = newBalance + 7'b1100100; 	// add 100 to money
 		
 		// Purchase product if specifications are reached
-		if ((fullInventory) && (state != 2'b11)) begin	// inventory is full and state is not 11
+		if ((fullInventory) && (state == 2'b01)) begin	// inventory is full and state is not 11
 			if ((~reduceInventory && ~reduceInventoryDone) && (~cancelled && ~cancelledDone)) begin	// Not in the middle of dispensing or cancelling a product
 				if (~paymentMethod) begin		// cash payment
 					if (enoughMoney) begin
@@ -116,7 +99,6 @@ always @(state, rst, enoughMoney, cancelled, cancelledDone, reduceInventory, nic
 					end	
 				end
 				
-				
 				// Response and request communication to enable state change to 00 to select new product (1)
 				if (~changeState && ~changeStateDone) begin
 					changeState = 1;
@@ -126,10 +108,10 @@ always @(state, rst, enoughMoney, cancelled, cancelledDone, reduceInventory, nic
 			
 		end
 		
-		// Response and request communication to enable state change to 00 to select new product (2)
-		if (changeState && changeStateDone) begin
-			changeState = 0;
-		end
+		// Response and request communication to enable dispensing of product (2)
+			if (reduceInventory && reduceInventoryDone) begin
+				reduceInventory = 0;
+			end
 		
 		// Response and request communication to enable dispensing of product (1)
 		if (reduceInventoryFlag) begin
@@ -138,10 +120,11 @@ always @(state, rst, enoughMoney, cancelled, cancelledDone, reduceInventory, nic
 				reduceInventoryFlag = 0;
 			end
 		end
+	
 		
-		// Response and request communication to enable dispensing of product (2)
-		if (reduceInventory && reduceInventoryDone) begin
-			reduceInventory = 0;
+		// Response and request communication to enable state change to 00 to select new product (2)
+		if (changeState && changeStateDone) begin
+			changeState = 0;
 		end
 		
 		

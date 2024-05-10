@@ -6,14 +6,14 @@ module dispenseChange_tb;
 parameter CLK_PERIOD = 10; // Clock period in ns
 
 // Inputs
-reg [8:0] change;
+reg [31:0] change;
 reg clk;
 
 // Outputs
-wire [3:0] quarters;
-wire [2:0] dimes;
-wire [2:0] nickels;
-wire [2:0] pennies;
+wire [8:0] quarters;
+wire [8:0] dimes;
+wire [8:0] nickels;
+wire [8:0] pennies;
 
 // Instantiate the Unit Under Test (UUT)
 dispenseChange dut(change, quarters, dimes, nickels, pennies);

@@ -20,16 +20,16 @@ input cancel;											// User input to cancel selection
 input [23:0] currentInventory;					
 										
 
-output wire [4:0] quarter_o;						// Change back (quarters)
-output wire [4:0] dime_o;							// Change back (dimes)
-output wire [4:0] nickel_o;						// Change back (nickels)
+output wire [8:0] quarter_o;						// Change back (quarters)
+output wire [8:0] dime_o;							// Change back (dimes)
+output wire [8:0] nickel_o;						// Change back (nickels)
 
 wire gclk;												// Gated clocks
 wire gclk2;
 
 localparam num_items = 8;							// Number of items in vending machine
 
-wire [8:0] change;									// Change back when process is cancelled by user
+wire [31:0] change;									// Change back when process is cancelled by user
 
 wire [3:0] curIndex;									// Current index selection	(output from scan)	
 

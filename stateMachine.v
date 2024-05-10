@@ -27,55 +27,49 @@ always @(posedge clk) begin
 		counter <= 0;
 	end else begin
 	
+		// Time out functionality
+		if ((counter > 40) ||(cancel)) begin
+			nextState <= 2'b11;
+			// Response and request communication to enable cancellation (1)
+			if (~cancelled && ~cancelledDone) begin
+				cancelled <= 1; 
+			end
+		end else if (fullInventory && (~cancelled && ~cancelledDone)) begin
+			nextState <= 2'b01;
+		end else if (~fullInventory && (~cancelled && ~cancelledDone)) begin
+			$display("Out of stock: Please select another item");
+			nextState <= 2'b00;
+		end
+	
 		$display("counter: %d, state: %d", counter, nextState);
 		counter <= counter + 1;
 
+		// Overwrites next state if neccesary
 		case (state)
-
-			2'b00 : begin
-				if (fullInventory) begin
-					nextState <= 2'b01;
-				end else if (~fullInventory) begin
-					$display("Out of stock: Please select another item");
-					nextState <= 2'b00;
-				end 
-			end
-			
 			2'b01 : begin
 				if (changeState && ~changeStateDone) begin
-					nextState <= 2'b00;
 					changeStateDone <= 1;
 				end
 			
 				// Response and request communication to initialize state 00 after dispensing product (2)
 				if (~changeState && changeStateDone) begin
 					changeStateDone <= 0;
+					nextState <= 2'b00;
 				end
 			end
 			
 			2'b11 : begin
 				$display("Cancelled");
-				// Response and request communication to enable cancellation (1)
-				if (~cancelled && ~cancelledDone) begin
-					cancelled <= 1; 
-				end
-				
+				counter <= 0;
 				// Response and request communication to enable cancellation (2)
 				if (cancelled && cancelledDone) begin
 					cancelled <= 0;
 					nextState <= 2'b00;	// select product
-					$display("CANCELLED BITCH");
 					
 				end
 			end
 			
 		endcase
-		
-		// Time out functionality
-		if ((counter > 40) ||(cancel)) begin
-			nextState <= 2'b11;
-			counter <= 0;
-		end 
 	end
 end
 
