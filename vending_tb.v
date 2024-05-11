@@ -45,25 +45,27 @@ initial begin
 	si = 0;
 	se = 0;
 
-	cost = {8'd100, 8'd100, 8'd100, 8'd100, 8'd100, 8'd100, 8'd100, 8'd100};
+	cost = {8'd125, 8'd110, 8'd100, 8'd150, 8'd200, 8'd100, 8'd300, 8'd200};
 	currentInventory = {3'd4,3'd4,3'd4,3'd4,3'd4,3'd4,3'd4,3'd4};
 
+	// Sets payment method to credit
 	paymentMethod = 1;
 	creditBalance = 9'd200;	//2 dollar
 	rst = 0;
 	cancel = 0;
 
 	#(CLK_PERIOD);
-	// Select the product
+	// Select the product (product 2)
 	index = 2;
 
+	// Resets to initialize registers
 	rst = 1;
 	#(2*CLK_PERIOD);
 	rst = 0;
 	#(2*CLK_PERIOD);
 	
 	// Insert coins
-	for (i=0; i<=3; i=i+1) begin	// insert 4 nickels and 4 dollars
+	for (i=0; i<=3; i=i+1) begin	// Insert 4 nickels and 4 dollars
 		nickel=1;
 		dollar=1;
 		$display("Money entered");
@@ -75,15 +77,10 @@ initial begin
 	
 	#(2*CLK_PERIOD);
 	
+	// Sets payment method to cash
 	paymentMethod = 0;
 	index = 3;
 	#(2*CLK_PERIOD);
-	
-//	cancel = 1;
-//	$display("CANCELLED");
-//	#(CLK_PERIOD);
-//	cancel = 0;
-//	#(CLK_PERIOD);
 	
 	dollar=1;
 	$display("Money entered");
@@ -100,9 +97,9 @@ initial begin
 	
 	index = 5;
 	
-	//cancel = 1;
-	
 	#(20*CLK_PERIOD);
+	
+	// Times out cancel after it counter reaches ~40
 	
 	
 end
