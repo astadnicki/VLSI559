@@ -15,7 +15,6 @@ always @(posedge clk) begin
 			1'b0 : q <= d;
 			1'b1 : q <= si;
 		endcase
-		$display("q: %d, d: %d", q, d);
 	end
 end
 
